@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KrepAI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      background-color: #1e1e1e;
+      color: white;
+    }
+    #sidebar {
+      width: 250px;
+      background-color: #181818;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+    }
+    .chat-link, .model-option, .history-item {
+      background: #181818;
+      padding: 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.9rem;
+    }
+    .chat-link:hover,
+    .model-option:hover,
+    .history-item:hover {
+      background: #333;
+    }
+    .section {
+      margin-bottom: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .section h3 {
+      margin: 0.8rem 0 0.4rem 0;
+      font-size: 0.9rem;
+      font-weight: normal;
+      color: #bbb;
+    }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #212121;
+    }
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .message {
+      max-width: 70%;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      line-height: 1.4;
+    }
+    .user {
+      background: #525252;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .bot {
+      background: #525252;
+      color: white;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    input::placeholder {
+      color: white;
+    }
+    #input-area {
+      display: flex;
+      padding: 0.5rem;
+      border-top: 1px solid #444;
+      background: #2a2a2a;
+    }
+    #user-input {
+      background-color: #3a3a3a;
+      color: white;
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 100px;
+      border: none;
+      outline: none;
+    }
+    #send-btn {
+      margin-left: 0.5rem;
+      padding: 0.8rem 1.2rem;
+      border: none;
+      border-radius: 100px;
+      background: #4b4b4b;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h2>KrepAI</h2>
+    <div class="section">
+      <div class="chat-link" id="new-chat">+ New Chat</div>
+    </div>
+    <div class="section">
+      <div class="model-option">GPT-3.5</div>
+      <div class="model-option">GPT-4o-mini</div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div class="section">
+      <h3>Chat</h3>
+      <div id="chat-history"></div>
+    </div>
+  </div>
+  <div id="main">
+    <div id="chat-container"></div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+  <script>
+    const chatContainer = document.getElementById("chat-container");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const newChatBtn = document.getElementById("new-chat");
+    const chatHistory = document.getElementById("chat-history");
+    let chats = [];
+    let currentChat = [];
+    let firstMessageAdded = false;
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+      msg.innerText = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    async function fetchBotReply(prompt) {
+      const apiKey = "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";
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+    async function handleSend() {
+      const text = userInput.value.trim();
+      if (text === "") return;
+      addMessage(text, "user");
+      currentChat.push({ role: "user", content: text });
+      if (!firstMessageAdded) {
+        addToHistory(text);
+        firstMessageAdded = true;
+      }
+      userInput.value = "";
+      addMessage("...", "bot");
+      const botReply = await fetchBotReply(text);
+      chatContainer.lastChild.innerText = botReply;
+      currentChat.push({ role: "assistant", content: botReply });
+    }
+    function addToHistory(title) {
+      const item = document.createElement("div");
+      item.classList.add("history-item");
+      item.innerText = title.length > 20 ? title.slice(0, 20) + "..." : title;
+      chatHistory.appendChild(item);
+    }
+    function startNewChat() {
+      if (currentChat.length > 0) {
+        chats.push(currentChat);
+      }
+      currentChat = [];
+      firstMessageAdded = false;
+      chatContainer.innerHTML = "";
+    }
+    sendBtn.addEventListener("click", handleSend);
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        handleSend();
+      }
+    });
+    newChatBtn.addEventListener("click", startNewChat);
+  </script>
+</body>
+</html>
