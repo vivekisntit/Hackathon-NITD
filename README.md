@@ -1,2 +1,14 @@
-# Hackathon-NITD
-Hi everyone, this is the second time I did a major project like this, 40% vibe coding ngl, will make changes to it to make it better looking and more functional. My last project also involved API and AI integration so that was a literally a life-saver.
+## KrepAI-Chatbot
+
+An AI-Chatbot for day-to-day doubts and conversation :)  
+
+---
+
+## 🚀 Features
+- Responsive, single-page chat interface.
+- Sidebar has:
+  - **New Chat** button (clears chat and saves history).
+  - **Model selection options** (`GPT-3.5`, `GPT-4o-mini`).
+  - **Chat history** (stores user's first message as title).
+- API integration with OpenAI’s Chat Completions API.
+- Simple and minimal.
